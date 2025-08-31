@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CSV to Pie Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    header {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #bb86fc;
+    }
+
+    canvas {
+      max-width: 600px;
+      max-height: 600px;
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
+    }
+
+    .error {
+      margin-top: 20px;
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>CSV → Pie Chart</header>
+  <canvas id="chartCanvas"></canvas>
+  <div id="error" class="error"></div>
+
+  <script>
+    const ctx = document.getElementById('chartCanvas').getContext('2d');
+    let chart;
+
+    async function loadCSV() {
+      try {
+        const response = await fetch("data.csv");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const text = await response.text();
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        
+        // Remove header if present
+        if (rows[0][0].toLowerCase() === "name" && rows[0][1].toLowerCase() === "value") {
+          rows.shift();
+        }
+
+        const labels = rows.map(r => r[0]);
+        const data = rows.map(r => parseFloat(r[1]));
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'CSV Data',
+              data: data,
+              backgroundColor: labels.map(() => 
+                `hsl(${Math.random() * 360}, 70%, 50%)`
+              ),
+              borderColor: '#121212',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                labels: { color: "#e0e0e0", font: { size: 14 } }
+              },
+              title: {
+                display: true,
+                text: 'Pie Chart from data.csv',
+                color: "#bb86fc",
+                font: { size: 20 }
+              }
+            }
+          }
+        });
+
+      } catch (error) {
+        document.getElementById("error").textContent = 
+          "Error loading data.csv: " + error.message;
+      }
+    }
+
+    loadCSV();
+  </script>
+</body>
+</html>
